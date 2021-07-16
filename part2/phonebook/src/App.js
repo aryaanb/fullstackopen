@@ -4,6 +4,7 @@ import Filter from './components/Filter';
 import Numbers from './components/Numbers'
 // import axios from 'axios'
 import personService from './services/persons'
+import Notification from './components/Notification';
 
 const App = () => {
   const [persons, setPersons] = useState([]);
@@ -12,6 +13,28 @@ const App = () => {
   const [filter, setFilter] = useState('');
   const [filters, setFilters] = useState([]);
   const [isFiltering, setIsFiltering] = useState(false);
+  const [message, setMessage] = useState(null)
+  const [style, setStyle] = useState({});
+
+  const errorStyle = {
+    color: "red",
+    background: "lightgray",
+    fontSize: 20,
+    borderStyle: "solid",
+    padding: 10,
+    marginBottom: 10,
+    borderRadius: 5
+  };
+
+  const messageStyle = {
+    color: "green",
+    background: "lightgray",
+    fontSize: 20,
+    borderStyle: "solid",
+    padding: 10,
+    marginBottom: 10,
+    borderRadius: 5
+  };
 
   useEffect(() => {
     console.log("effect");
@@ -56,7 +79,7 @@ const App = () => {
   const addPerson = (event) => {
     // the default action of submitting a form is to reload the screen
     event.preventDefault();
-
+    setStyle(messageStyle);
     // issues a warning if we add the same name again
     if (persons.filter((person) => person.name === newName).length > 0) {
       // this is a template string
@@ -64,11 +87,28 @@ const App = () => {
         const person = persons.filter(per => per.name === newName)[0]
         const newPerson = { ...person, number: newNum }
         personService
-          .update(person.id, newPerson)
+          .update(newPerson.id, newPerson)
           .then(response => {
+            // response here is a person object
             // change the state of the person so that the updated num is visible
             setPersons(persons.map(per => per.id === response.id ? response : per));
+            // message that displays that we have added a new person
+            setMessage(`Added ${newName}`)
+            // after 5 seconds setMessage to null
+            setTimeout(() => {
+              setMessage(null);
+            }, 5000)
+            setNewName('');
+            setNewNum('');
             console.log(response);
+          })
+          .catch(error => {
+            console.log(error)
+            setStyle(errorStyle);
+            setMessage(`The information of ${newName} has been deleted from the server`)
+            setTimeout(() => {
+              setMessage(null);
+            }, 5000)
           })
       }
       return;
@@ -93,6 +133,13 @@ const App = () => {
       .create(newPerson)
       .then(response => {
         setPersons(persons.concat(response));
+        // message that displays that we have added a new person
+        setMessage(`Added ${newName}`)
+        // after 5 seconds setMessage to null
+        setTimeout(() => {
+          setMessage(null);
+        }, 5000)
+        console.log(response);
         setNewName('');
         setNewNum('');
       })
@@ -124,6 +171,7 @@ const App = () => {
   return (
     <div>
       <h2>Phonebook</h2>
+      <Notification message={message} style={style}></Notification>
       <Filter
         filter={filter}
         handleFilter={handleFilter}
